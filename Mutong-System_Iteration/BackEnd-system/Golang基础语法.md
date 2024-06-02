@@ -344,6 +344,62 @@ func main(){
 
 **定义：**由**基础数据类型**和**系统内嵌函数**组成。
 
+## 1.8 常量
+
+### 1.8.1 常量的介绍
+
+1）常量使用const关键字
+
+2）常量在定义的时候必须初始化
+
+3）常量不能修改
+
+4）常量只能修饰bool、数值类型（int，float系列）、string。
+
+### 1.8.2 常量的使用语法
+
+const identifier [type] = value
+
+```go
+//带上type
+const tax int = 10
+//不带type，类型推导
+const tax = 10
+```
+
+### 1.8.3 常量使用注意事项和细节
+
+⚠️注意：
+
+1）比较简洁的写法
+
+```go
+const (
+	a = 1
+  b = 2
+)
+```
+
+2）比较专业的写法
+
+```go
+//❗️表示 a 赋值为0，b 在 a 的基础上+1，c 在 b 的基础上+1
+const (
+	a = iota //0
+  b //1
+  c //2
+)
+
+//❗️c 和 d 没有换行，所以 d 没有在 c 的基础上+1
+const (
+	a = iota //0
+  b = iota //1
+  c, d = iota, iota //2 2
+)
+```
+
+3）在golang中没有规定常量名称必须所有字母大写；依然根据首字母大小控制常量的访问范围。
+
 # 2 运算符
 
 **❗️❗️特别说明：Golang不支持三元运算符。**因为Golang设计者希望一个事情只有一种解决方法。（直接if else解决）
@@ -897,6 +953,95 @@ func cal(n1 float64, n2 float64, operator byte) float64 {
 }
 ```
 
+**函数参数的传递方式：**
+
+1）**值传递：**❗️基本数据类型、数组、结构体struct都是值类型（变量存储的是值本身）
+
+2）**引用传递：**❗️指针、切片、map、管道chan、interface等引用类型（变量存储的是一个地址）
+
+（其实，不管值传递还是引用传递，**传递给函数的都是变量的副本**，只不过值传递的是值的拷贝，引用传递的是地址的拷贝）
+
+（一般来说，**地址拷贝效率高，因为数据量小**；值拷贝根据数据量的大小，数据越大，效率越低）
+
+
+
+**注意⚠️**：
+
+1）如果返回多个值，在接收时，希望忽略某个返回值，则**使用_符号表示占位忽略**
+
+2）如果返回值只有一个，（返回值列表）可以不写（）。
+
+3）函数的行参列表可以是多个，返回值列表也可以是多个；且它们的数据类型可以是**值类型**和**引用类型**。
+
+4）函数的命名遵循标识符命名规范，首字母大写（public）可以跨包使用，首字母小写（private）只能本包使用
+
+5）**基本数据类型 和 数组 默认都是值传递，即进行值拷贝**。函数内部修改不会影响到原来的值。
+
+6）如果希望函数内的变量能修改函数外的变量（指的是默认以值传递方式的数据类型），可以传入变量的地址&，函数内以指针的方式操作变量，从效果上看**类似引用**。
+
+7）Go函数不支持函数重载。（**函数重载：也就是两个函数的函数名相同，但行参列表不同，也会被认为是两个函数（一般语言支持）**）
+
+8）Golang中，**函数也是一种数据类型**，可以赋值给一个变量，则该变量是一个函数类型的变量了，通过该变量可以对函数调用；函数既然是一种数据类型，所以在go中，**函数可以作为函数的行参，并且调用**。
+
+```go
+func getSum(n1 int, n2 int) int {
+  return n1+n1
+}
+
+func myFun(funvar func(int, int) int, num1 int, num2 int){
+  //使用传入的函数
+  return funvar(num1,num2)
+}
+
+func main(){
+  //将getSum函数赋值给a变量
+  a := getSum
+  //通过a变量操作getSum函数
+  res := a(10,40)
+  //将getSum作为行参传入myFun函数
+  res2 := myFun(getSum, 20,30) //返回结果为50
+}
+```
+
+9）Go支持**自定义数据类型**：
+
+​	基本语法：type 自定义数据类型名 数据类型 （其实就相当于起了一个别名）
+
+​	例如：type myInt int（**此时myInt就相当于int，但是go认为它们还是两个类型，所以不能互相直接赋值**）
+
+10）**go支持对函数返回值命名**：
+
+```go
+//直接在返回值列表定义处对返回值命名，相当于直接指定了返回值返回那两个变量
+func cal(n1 int, n2 int) (sum int, sub int) {
+  sum = n1 + n2
+  sub = n1 - n2
+  return //这里就相当于 return sum，sub
+}
+```
+
+11）**Go支持可变参数**，语法为固定的三个点...，并且**可变参数必须放在行参列表的最后**。
+
+```go
+//支持0到多个int参数
+func sum(args...int) int {
+}
+//支持1到多个int参数
+func sum(n1 int, args...int) int {
+  sum := n1
+  for i := 0; i < len(args); i++ {
+    sum += args[i]
+  }
+}
+
+//⚠️args是slice切片，通过args[index]可以访问到各个值；args处可以自行命名（不一定是args）。
+
+```
+
+12）func sum(**n1, n2 float32**) float32 {} 函数 行参列表 或 返回值列表 可以这样定义，也就是**同时定义多个相同类型变量**。
+
+
+
 ### 4.1.2 函数调用机制
 
 **栈区：**基本数据类型**一般**分配在栈区。（一般，编译器存在一个逃逸分析）
@@ -911,11 +1056,7 @@ func cal(n1 float64, n2 float64, operator byte) float64 {
 
 3）当一个函数调用完毕（执行完毕）后，程序会销毁这个函数对应的栈空间。
 
-**注意⚠️**：
 
-1）如果返回多个值，在接收时，希望忽略某个返回值，则**使用_符号表示占位忽略**
-
-2）如果返回值只有一个，（返回值列表）可以不写（）。
 
 
 
@@ -932,6 +1073,324 @@ func cal(n1 float64, n2 float64, operator byte) float64 {
 3）递归必须向递归条件逼近，否则就是无限递归。（**递归必须有终止条件**）
 
 4）当一个函数执行完毕，或者遇到return返回，谁调用，结果就返回给谁；同时该函数（被调用的这个函数）本身也会被销毁。
+
+### 4.1.4 init函数
+
+**定义：****每一个源文件都可以包含一个init函数**，该函数会在main函数执行之前，被Go运行框架调用。（**也就是init函数会在main函数之前被调用**）
+
+**作用：**通常用于初始化工作。
+
+注意⚠️：
+
+1）如果一个文件同时包含全局变量定义，init函数和main函数，则执行的流程是 **变量定义->init函数->main函数**。
+
+2）init函数完成初始化工作案例：
+
+```go
+//utils包
+package utils
+
+//第一步执行
+var Age int
+var Name string
+//第二步执行
+func init(){
+  Age = 100
+  Name = "Tom"
+}
+
+//main函数
+package main
+import "go_code/chapter/utils"
+
+func main(){
+  //⚠️因为在import utils包那一步时，utils包当中的init函数就被执行了，所以这里使用的utils.Age和utils.Name就是被赋了具体值的
+  //age = 100，name = Tom
+  age := utils.Age
+  name := utils.Name
+}
+```
+
+### 4.1.5 匿名函数
+
+**基本介绍：**匿名函数就是**没有名字的函数**。如果我们某个函数只是希望使用一次，可以考虑使用匿名函数。当然匿名函数可以实现多次调用。
+
+```go
+//使用方式一：定义匿名函数的时候就直接调用（这种方式匿名函数只能调用一次）
+res := func (n1 int, n2 int) int {
+  return n1+n2
+}(10,20)
+
+//使用方式二：将匿名函数赋给一个变量，通过该变量来调用匿名函数 (这种方式匿名函数可以反复调用)
+//此时 a 就是一个函数类型，通过a完成调用
+//⚠️放在main函数外就是一个全局匿名函数
+a := func (n1 int, n2 int) int {
+  return n1 - n2
+} 
+res2 := a(10,20)
+```
+
+
+
+### 4.1.6 闭包
+
+**基本介绍：**闭包就是**一个函数**和**其相关的引用环境**组合的一个整体（实体）。
+
+**闭包使用示例1:**
+
+```go
+//AddUpper是一个函数，返回的数据类型是func (int) int
+func AddUpper() func (int) int {
+  //--闭包start--
+  var n int = 10
+  return func (x int) int {
+    n = n + x
+    return n
+  }
+  //--闭包end--
+}
+func main(){
+  //注意⚠️这里返回的f是一个闭包
+  f := AddUpper()
+  fmt.Println(f(1))//11
+  fmt.Println(f(2))//13
+  fmt.Println(f(3))//16
+}
+
+//注意⚠️：
+//1）可以这么理解：闭包是类，函数是操作。n是字段。这个匿名函数和它使用到的函数外的n构成了闭包。
+//2）反复调用f函数，因为n是初始化一次，因此没调用一次就进行累计.(就是构成了闭包，是一个整体，所以这个n只初始化一次)
+//3）搞清闭包的关键：就是分析出返回的函数和它引用到的变量
+```
+
+**闭包使用示例2:**
+
+```go
+
+func makeSuffix(suffix string) func (string) string {
+  //❗️suffix变量和下面语句形成一个闭包
+  return func (name string) string {
+    //如果name没有指定后缀，则加上，否则赶回原来的名字
+    if !string.HasSuffix(name,suffix) {
+      return name + suffix
+    }
+    return name
+  }
+  
+}
+
+
+func main(){
+  
+  //注意⚠️，这里返回的f2是一个闭包
+  f2 := makeSuffix(".jpg") //❗️这里.jpg只用传入一次就保存在了suffix中
+  fmt.Println(f2("winter")) // winter.jpg
+}
+
+```
+
+
+
+### 4.1.7 函数中-defer关键字
+
+**defer的作用：**函数中，程序员经常创建资源（比如数据库连接、文件句柄、锁等），在函数执行完毕后，**使用defer（延时机制）可以及时释放资源**。
+
+```go
+func sum(n1 int,n2 int) int {
+  
+  //❗️当执行到defer时，后面语句暂时不执行，会将defer后面的语句压入到独立的栈
+  //（并且相关的值也会拷贝入栈，所以即使后面改变了这个值，defer栈中的这个值不会变）
+  //当函数执行完毕后，再从defer栈，按照 先入后出 的方式出栈，执行
+  defer fmt.Println(n1)//第三 10
+  defer fmt.Println(n2)//第二 20
+  
+  res := n1 + n2
+  fmt.Println(res) //第一 30
+  return res 
+}
+
+func main(){
+  res := sum(10,20)
+  fmt.Println(res)//第四 30
+}
+```
+
+**defer最佳实践**：
+
+```go
+//defer最主要的价值：当函数执行完毕后，可以及时释放函数创建的资源
+func test(){
+  file = openFile(文件名)
+  defer ficle.close() //创建资源就直接写一个defer，函数执行完就立马自动释放
+}
+
+```
+
+### 4.1.8 变量作用域
+
+**局部变量**：**函数内部定义/声明的变量**，作用域仅限于函数内部。
+
+**全局变量**：**函数外部声明/定义的变量**，作用域在整个包都有效，如果首字母大写，在整个程序都有效。
+
+**代码块内变量：在一个代码块中定义/声明的变量**（比如在if/for中），作用域仅限于代码块内。
+
+**注意⚠️：**
+
+1）比如存在一个全局变量name和局部变量name时，我在局部变量作用域使用name变量，使用的是局部变量（因为**编译器采用就近原则**）
+
+2）全局变量（函数外定义）不能这样定义❌Name := “Tom”（因为这相当于两个语句，第二个语句是赋值语句，而**赋值语句不能在函数体外执行**）
+
+### 4.1.9 Golang常用函数
+
+#### 4.1.9.1 Go字符串相关函数
+
+除了内置函数，其他字符串相关函数，需要引入strings包、strconv包。
+
+**1）统计字符串长度，按字节: len(str)** 
+
+（Go内置函数）
+
+（ascii的字符（数字和字母）占一个字节，汉字占用3个字节）
+
+**2）字符串遍历，同时处理含有中文的问题: str := []rune("hello广州")**
+
+（因为在Go中，字符串是不可变的字节序列，每个字节表示的都是原始字符对应的UTF-8编码）
+
+（也就是将string数据类型转换为[]rune数据类型，从而实现字符遍历）
+
+**3）字符串转整数： n, err := string.Atoi("12")**
+
+**4）整数转字符串：str = string.Itoa(123)**
+
+**5）字符串转字节[]byte：var bytes = []byte("hello go")** 
+
+**6）字节[]byte转字符串：var str = string([]bete{97, 98, 99})**
+
+**7）10进制转 2，8，16进制：var str = strconv.FormatInt(123, 2)** 
+
+（第一个是10进制数，第二个是要转的进制数）
+
+**8）查找子串是否在指定的字符串中：strings.Contains("seafood", "foo")** 
+
+（第一个是要被查找的字符串，第二个是要查找的子串）
+
+（返回bool型true或false）
+
+**9）统计一个字符串中有几个指定的子串：strings.Count("cehseee", "e") //4**
+
+（第一个是要被统计的字符串，第二个是要统计的子串）
+
+**10）不区分大小写的字符串比较：strings.EqualFold("abc", "Abc") // true**
+
+（一般直接"=="比较是区分大小写的）
+
+**11）获取子串在字符串第一个出现的index值，如果没有返回-1：strings.Index("NNN_abc","abc") //4**
+
+（第一个是要被查询的字符串，第二个是要查询的子串）
+
+**12）返回子串在字符串最后一次出现的位置，如没有返回-1：strings.LastIndex(" go golang", "go")//3**
+
+（第一个是要被查询的字符串，第二个是要查询的子串）
+
+（最后出现的位置是看这个子串的最后一个字母）
+
+**13）将指定的子串替换成 另外一个子串：str = strings.Replace("go go hello", "go", "go语言", n)**
+
+（第一个是要被进行操作的字符串，第二个是指定要被替换的子串，第三个是替换的子串）
+
+（n指定你希望替换几个，如果n=-1表示全部替换）
+
+（注意⚠️：第一个字符串不会真的被替换，它会返回一个新串）
+
+**14）指定某个字符作为分割标识，将一个字符串拆分成字符串数组：strArr = string.Split("hello, world, ok", ",")**
+
+（第一个是将要被拆分的字符串，第二个是分割字符）
+
+（注意⚠️：第一个字符串没有真的被切割（改变），它会返回一个拆分后的字符串数组）
+
+**15）将字符串的字母进行大小写转换：strings.ToLower("Go") // go ; strings.ToUpper("Go") //GO**
+
+**16）将字符串左右两边的空格去掉：str = strings.TrimSpace("   hasidio.  ")**
+
+（注意⚠️：原先的字符串不会真的改变，它返回了一个新串）
+
+**17）将字符串左右两边指定的字符串去掉：str = strings.Trim("! he!llo! ", " !")  //he!llo**
+
+（如示例，去掉了左右两边的空格和感叹号）
+
+**18）将字符串左边指定的字符串去掉：str = strings.TrimLeft("! he!llo! ", " !")  // he!llo!** 
+
+**19）将字符串右边指定的字符串去掉：str = strings.TrimRight("! he!llo! ", " !")  // ! he!llo**
+
+**20）判断字符串是否以指定字符串开头：b = strings.HasPrefix("ftp://192.168.10.1", "ftp") //true**
+
+**21）判断字符串是否以指定字符串结束：b = strings.HasSuffix("let.jpg", "jpg") //true**
+
+
+
+#### 4.1.9.2 Go时间和日期函数
+
+时间日期相关函数，需要导入time包。
+
+**1）获取当前时间：now := time.Now()** 
+
+（time.Now()返回的变量类型为time.Time，是一个结构体）
+
+**2）获取当前时间的 年月日、时分秒：now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second()**
+
+（要先用time.Now()获取当前时间now）
+
+**3）格式化日期时间：now.Format("2006/01/02 15:04:05"), now.Format("2006-01-02"), now.Format("15:04:05")**
+
+（要先用time.Now()获取当前时间now）
+
+（注意⚠️：这个字符串中数字是固定的，必须这样写，但可以自由组合，这样程序会按需求返回指定格式的时间和日期（比如用/连接还是用-链接））
+
+**4）时间的常量：**
+
+1 Hour = 60 Minute
+
+1 Minute = 60 Second
+
+1 Second = 1000 Millisecond
+
+1 Millisecond(毫秒) = 1000 Microsecond
+
+1 Microsecond(微秒) = Nanosecond(纳秒)
+
+**5）程序休眠：time.Sleep(time.Second*10) //休眠10秒**
+
+（注意⚠️：不能出现 time.Second*0.1 这种写法，结果为小数编译器不认的，如果想达到这种效果只能 time.Milisecond * 100）
+
+**6）获取当前 unix时间戳 和 unixnano时间戳：now.Unix(), now.UnixNano()**
+
+（作用：可以获取随机数字）
+
+（获取的分别是从1970年1月1日到现在的秒数和纳秒数）
+
+
+
+#### 4.1.9.3 内置函数buildin
+
+不需要引入包就可以直接使用。
+
+**1）len：用来求长度：len(str)**
+
+可以求string、array、slice、map、channel的长度。
+
+**2）new：用来分配内存，主要用来分配值类型：num := new(int)**
+
+可以给int、float32、struct等值类型分配内存，返回的是一个指针。
+
+（num是一个指针类型，num的值为指向空间的地址，num的地址还是它的地址）
+
+（而num的值所存的地址指向的区域存的值默认为0（也就是前面提到的变量的默认初始值））
+
+**3）make：用来分配内存，主要用来分配引用类型：**
+
+可以给channel、map、slice等引用类型分配内存
+
+
 
 ## 4.2 包
 
@@ -975,3 +1434,2331 @@ import util "go_code/utils"
 6）**一个包下不能有相同的函数名和全局有变量名（否则报重复定义错误）**。（不仅是同一个文件下不能有相同函数名，同一个包下的不同文件也不允许有相同的函数名）
 
 7）**只有main包（package main）才可以编译成一个可执行程序文件**；如果只是写一个库，包名可自定义（库编译会生成一个.a库文件，比如utils.a）。
+
+## 4.3 错误处理
+
+### 4.3.1 为什么需要错误处理机制？
+
+默认情况下，发生错误（panic），程序就会直接退出（崩溃）。
+
+### 4.3.2 Golang错误处理方式：defer、panic、recover
+
+**简单描述：**Go会抛出一个**panic**异常，然后在**defer**中通过**recover**捕获这个异常，然后正常处理（程序不会崩溃）。
+
+```go
+func test(){
+  //使用 defer + recover 来捕获和处理异常
+  defer func(){
+    err := recover() //recover()是Golang内置函数，可以捕获到异常
+    if err != nil { //nil是一个零值；这里说明捕捉到错误
+      fmt.Println("err=", err)
+    }
+  }()//⚠️这是一个匿名函数，调用直接在定义完后
+  
+  num1 := 10
+  num2 := 0
+  res := num1/num2 //这里报错函数结束（⚠️虽然这个函数结束，但是main主程序并不会因此崩溃），于是会从defer栈中拿出匿名函数开始执行
+  
+}
+```
+
+### 4.3.3 错误处理的好处
+
+1）程序不会轻易全盘挂掉
+
+2）如果加入预警代码，就可以让程序更加健壮
+
+### 4.3.4 Golang自定义错误
+
+```go
+import "errors"
+
+func readConf(name string) (err error){
+  if name == "config.ini" {
+    return nil
+  }else{
+    return errors.New("读取文件错误...") //⚠️使用errors.New()函数返回一个自定义错误信息的error类型值
+  }
+}
+
+func test(){
+  
+  err := readConf("config.ini")
+  //如果读取文件错误
+  if err != nil {
+    //⚠️panic是Golang内置函数，可以输出自定义error类型错误并且终止程序
+    panic(err)
+  }
+  
+}
+
+```
+
+# 5 数组和切片
+
+## 5.1 数组
+
+### 5.1.1 数组的定义和访问
+
+**定义**：数组可以存放**多个同一类型数据**，数组也是一种数据类型，在Go中，**数组为值类型**。
+
+**基础定义数组的方式**：var 数组名 [数组大小]数据类型
+
+```go
+//定义一个数组
+var hens [6]float64
+```
+
+**四种初始化数组方式：**
+
+```go
+//1 相当于把后边的没有名字的数组交给左边
+var numArr1 [3]int = [3]int {1,2,3}
+//2 相当于把后边的没有名字的数组交给左边，但左边不写类型，使用类型推导
+var numArr2 = [3]int {1,2,3}
+//3 不指定数组的长度；也有使用类型推导
+var numArr3 = [...]int {6,7,8}
+//4 指定元素的下标，也就是说可以不按默认顺序初始化；也有使用类型推导
+var numArr4 = [3]string{1:"tom", 0:"jack", 2:"merry"}
+```
+
+**❗️❗️❗️插播一条❗️❗️❗️🎺:**
+
+```go
+//	其中num是float64的数据类型, length是int类型
+n := num / 6 //✅ 虽然分母6看起来是整型，但是一个常量，编译通过
+n1 := num / length //❌ 分子分母类型不匹配进行运算，编译不通过
+```
+
+**访问数组元素**：数组名[下标]
+
+**注意⚠️：**
+
+1）数组是多个**相同类型数据的组合**；一个数组一旦声明/定义了，其**长度是固定的，不能动态变化**（否则报越界）。
+
+2）在Go中，**长度被认为是数组数据类型的一部分**，所以定义的时候，要么直接写清楚，要么赋值类型推导
+
+3）var arr []int 这时arr就是一个切片，是动态的。
+
+4）数组元素可以是**任意的数据类型**（值类型或引用类型），但**不能混用**。
+
+5）数组创建后如果没有赋值，则有默认值。
+
+6）Go的数组属于值类型，默认情况下是值传递，因此会进行**值拷贝**；因此，如果想在其他函数中修改原来的数组，可以使用引用传递（指针方式）
+
+```go
+func test(arr *[3]int){
+  //先用*把数组取了，再取第一个元素
+  (*arr)[0] = 88
+}
+
+func main(){
+  arr := [3]int{11,22,33}
+  test(&arr)
+}
+```
+
+
+
+### 5.1.2 数组的内存布局
+
+**注意⚠️：**
+
+1）当执行完 var hens [6]int ，就在空间中开辟了一个数组空间，默认值都为0（因为int类型的初始默认值为0）
+
+2）数组的地址可以根据数组名来获取
+
+3）数组的第一个元素的地址，就是数组的首地址
+
+4）Golang中数组是连续存储的；第二个元素的地址就是第一个元素地址加上第二个元素占的字节数
+
+（比如数组数据类型为int64类型，那第二个元素的地址就是第一个元素地址加上8）
+
+
+
+### 5.1.3 数组的遍历
+
+**方式一：常规遍历（for i:=0; i<len(arr); i++ {}）**
+
+**方式二：for-range结构遍历 for index, value := range arr {}**
+
+**注意⚠️：**
+
+1）index和value的名称不是固定的，程序员可自行指定
+
+2）如果不想要下标index的值，可以直接把下标index改为下划线_
+
+### 5.1.4 多维数组-二位数组
+
+**定义/声明二维数组**：var 数组名 【大小】【大小]】类型
+
+```go
+var arr [4][6]int
+```
+
+**使用方式：**
+
+​	1）先声明/定义再赋值
+
+​	2）四种直接初始化写法（和一维数组类似，还有其他变种）
+
+```go
+//第一种
+var arr [2][3]int = [2][3]int{{1,2,3},{4,5,6}}
+//第二种
+var arr [2][3]int = [...][3]int{{1,2,3},{4,5,6}}
+//第三种
+var arr = [2][3]int{{1,2,3},{4,5,6}}
+//第四种
+var arr = [...][3]int{{1,2,3},{4,5,6}}
+```
+
+**内存布局：**
+
+​	比如执行 var arr [2]【3】int 之后，会得到一个数组存放2个指针；
+
+​	第二个指针是第一个指针加上24（3*8）；
+
+​	第一个指针指向的就是第一个一维数组的首地址，第二个指针指向的是第二个一维数组的首地址。
+
+<img src="/Users/mac/Desktop/markdown笔记/Mutong-System_Iteration/BackEnd-system/GolangNoteImage/WeChate7d24c2e74a46e5a7b4916c7161da858.png" alt="WeChate7d24c2e74a46e5a7b4916c7161da858" style="zoom:50%;" />
+
+## 5.2 切片
+
+### 5.2.1 切片的定义和访问
+
+**定义：**切片（slice）是一个可以动态变化的数组（不严谨）。
+
+**定义切片的基本语法：**var 变量名 []类型
+
+```go
+var a []int
+```
+
+**切片的基本使用：**和数组类似，**遍历切片、访问切片元素、求切片长度**都和数组一样。
+
+**快速入门案例：**
+
+```go
+var intArr [5]int = [...]int{1,22,33,66,99}
+slice := intArr[1:3]//注意❗️这里是引用到intArr数组，而不是值拷贝
+fmt.Println("slice 的容量 = ", cap(slice)) // 4 切片的容量是动态变化的，且❗️是自动分配的，不固定。
+```
+
+**三种定义使用切片的方式：**
+
+```go
+//第一种：定义一个切片，然后让切片去引用已经创建的数组
+var intArr [5]int = [...]int{1,22,33,66,99}
+slice := intArr[1:3]//注意❗️这里是引用到intArr数组，而不是值拷贝
+
+//第二种：通过make创建切片 
+var 切片名 []type = make([]type, len, [cap])//切片的类型、切片长度、切片容量（可选，但必须大于等于长度）
+//⚠️注意，通过make创建出来的实际上是一个 均为默认值的数组 和 一个slice结构体 ，但这个数组只能slice访问了（底层维护，程序员不可见）。
+
+//第三种：定义一个切片时就直接指定具体数组，底层原理类似make
+var slice []int = []int{1,3,5}
+
+```
+
+注意⚠️：
+
+1）切片依然**不能越界使用**，只能使用自己切出来的部分，但可以动态增长。
+
+2）切片使用的一些简写，**arr[0,end] => arr[:end]，arr[start:len(arr)] => arr[start:]，arr[0,len(arr)] => arr[:]**
+
+3）cap是一个内置函数，用于统计切片的容量，即最大可以存放多少元素
+
+4）切片定义完后还不能使用（本身空的），需要引用到一个数组，或者make一个空间供切片来使用。
+
+5）切片可以继续切片[]，但引用的都是同一个数据空间arr。
+
+6）切片是**引用类型**，所以在**传递时，遵循引用传递机制**（函数内部的改变影响实际数据）。
+
+### 5.2.2 切片的内存布局
+
+注意⚠️：
+
+1）slice是一个引用类型，从底层来说是一个结构体struct。
+
+2）slice由3个部分构成：a.引用的数组的那个元素的地址 b.长度len c.容量cap
+
+```go
+type slice struct {
+  ptr *[2]int
+  len int
+  cap int
+}
+```
+
+### 5.2.3 切片动态追加append
+
+```go
+var slice []int = []int{1,3,5}
+
+//通过append直接追加具体元素
+slice = append(slice,6,7)//注意要接收覆盖原本的slice，否则就只是创建了一个新的扩容的slice而没有改变slice
+
+//通过append将 切片(不能是数组) 追加给 原先切片
+slice = append(slice, slice...)//1，3，5，6，7，1，3，5，6，7
+```
+
+注意⚠️：
+
+1）切片append本质操作就是对数组扩容
+
+2）go底层会先创建一个新的数组newArr（扩容后的数组大小），然后将slice原本包含的元素拷贝到新的数组newArr，接着slice重新引用到newArr（当然相应的len和cap也会变化），原先的Arr就会被垃圾回收。其中newArr底层维护，程序员不可见。
+
+### 5.2.4 切片的拷贝操作copy
+
+```go
+var a []int = []int {1,2,3,4,5}
+var slice = make([]int,10)
+//将切片a的值拷贝到slice，默认从第0个元素拷贝
+copy(slice,a)
+//⚠️注意 copy(para1,para2)中para1和para2都是切片类型
+//⚠️注意 para1不一定需要比para2长，它会根据para1可复制的空间复制
+```
+
+
+
+### 5.2.5 string和slice
+
+```go
+//string底层是一个byte数组，而它本身也可可以算是一个切片，因此可以切片处理。
+str := "hello123123"
+slice := str[4:]
+```
+
+**string内存布局：**a. 指向底层byte数组的地址 b. 长度len （可以说也是一个struct，和切片类似）。
+
+注意⚠️：
+
+1）string是不可变的，不能通过str[0] = 'z'的方式修改字符串
+
+2）如果需要修改字符串，可以将string -> []byte 或 []rune，然后修改，最后重新转成string。
+
+```go
+//string -> []byte ❗️不能处理中文，byte按字节处理，而汉字三个字节
+arr1 := []byte(str)
+//string -> []rune ❗️可以处理中文，rune按字符处理，不论字符有多少字节（兼容汉字）
+arr2 := []rune(str)
+```
+
+# 6 映射map
+
+## 6.1 map的定义及基本语法
+
+**定义：**key-value，类似python中的字典。
+
+**基本语法：**var 变量名 map[keytype]valuetype
+
+```go
+//声明一个空map
+//注意❗️：map声明不会分配内存空间，是一个空map，必须make分配数据空间
+var a map[string]string
+
+//make分配空间
+//第一个是定义的map数据类型，第二个是分配的数据空间数（也就是可以放10个key-value）
+a = make(map[string]string,10)
+
+//给map赋值
+//注意❗️：key不能重复；且golang中key-value是无序的
+a["hei"] = "haha"
+```
+
+**注意⚠️：**
+
+1）**map的key一般为 int 或 string 类型。**但bool、数字、string、指针、channel，甚至包含前面几个类型的 借口、结构体、数组也可以作为key。**但slice、map和function是绝对不可以作为key的类型**（无法用==判断）。
+
+2）**map的value一般为数字、string、map、struct类型。**
+
+## 6.2 map的使用方式
+
+**map的三种使用方式：**
+
+```go
+//第一种：声明，然后make，最后赋值
+var a map[string]string
+a = make(map[string]string, 10)
+a["haha"] = "haahha"
+
+//第二种：声明和make同时进行，最后赋值
+cities := make(map[string]string)
+cities["hahah"] = "hahaha"
+
+//第三种：声明和赋值一起（make底层自动做了）
+heroes := map[string]string{
+  "here1":"lmt",//注意这里即使是最后一个也要加逗号
+}
+```
+
+**map使用案例**：
+
+```go
+//key为string类型；value为str-str的map类型
+studentMap := make(map[string]map[string]string)
+
+//由于value是map类型，所以使用需要再make开辟数据空间
+studentMap["stu01"] = make(map[string]string, 2)
+studentMap["stu01"]["name"] = "tom"
+studentMap["stu01"]["sex"] = "男"
+```
+
+**获取map的长度:**(有多少对key-value)
+
+length = len(map)
+
+## 6.3 map的增删改查操作
+
+### 6.3.1 map的增加和改变操作 map["key"] = value
+
+如果key存在就是改；如果key还没有就是增加。
+
+### 6.3.2 map的删除操作 delete(map, "key")
+
+如果key存在就删除；如果key不存在则不操作也不报错。
+
+**注意⚠️：**
+
+1）在golang中没有一次删除map所有key的方法。可以遍历key逐个删除。
+
+2）或者map = make(...)，make一个新的让原来的成为垃圾被回收掉。
+
+### 6.3.3 map的查找操作 value, isFind = heroes["lmt"]
+
+如果存在这个key，isFind为true反之为false。
+
+### 6.3.4 map的遍历
+
+不能用传统for遍历，需要使用for-range。
+
+```go
+for k, v := range cities{
+  fmt.Printf("k=%v v=%v",k,v)
+}
+```
+
+## 6.4 map切片 []map
+
+```go
+//声明make一个map切片
+var monsters []map[string]string
+monsters := make([]map[string]string,2)
+
+//添加monster信息
+//⚠️当第一层map下没有直接的key时，map可以用下标去访问
+monster[0] = make(map[string]string,2)
+monster[0]["name"] = "牛"
+monster[0]["age"] = "100"
+monster[1] = make(map[string]string,2)
+monster[1]["name"] = "牛"
+monster[1]["age"] = "120"
+
+//map切片使用append动态增加
+newMonster := map[string]string{
+  "name":"羊",
+  "age":"200",
+}
+monster = append(monsters, newMonster)
+```
+
+## 6.5 map排序
+
+**map排序思想：**将map的key放入切片，然后对这个切片排序，最后根据切片中key的顺序遍历map。
+
+**注意⚠️：**
+
+1）golang中没有专门方法针对map的key进行排序
+
+2）map是无序的，不仅是和key没关系，和添加顺序也无关。每次遍历得到的输出都可能不一样。
+
+## 6.6 map的使用细节
+
+1）map是引用类型，遵守引用类型传递的机制（在一个函数接收map，修改后会直接修改原来的map）。
+
+2）map的容量达到后再增加元素，会自动扩容（map能动态增长key-value），不会发生panic。
+
+3）map的value也经常使用struct类型管理复杂数据（比起value为map，struct更好）。
+
+# 7 面向对象编程（上）
+
+## 7.1 Golang的面向对象
+
+**特点：**
+
+1）golang的面向对象和传统意义的面向对象编程（OOP）不同，**没有类class的概念，用结构体struct代替了类的概念**。可以理解为**golang是基于struct来实现OOP特性的**。
+
+2）**golang不是纯粹的面向对象语言**，一般说**golang支持面向对象编程特性**。
+
+3）**golang面向对象编程非常简洁**，去掉了传统OOP语言的继承、方法重载、构造函数和析构函数、隐藏的this指针等。
+
+4）golang仍然有面向对象编程的**继承、封装和多态**的特性，只是实现的方式和其他OOP语言不一样，比如继承：**golang没有extends关键字，继承是通过匿名字段来实现。**
+
+5）golang面向对象很优雅，OOP本身就是语言类型系统的一部分，通过接口interface关联，**耦合度低**，非常灵活。可以说golang中**面向接口编程**是非常重要的特性。
+
+## 7.2 结构体struct
+
+### 7.2.1 结构体和结构体变量（实例）的区别和联系
+
+1）结构体是**自定义的数据类型**，代表一类事物
+
+2）结构体变量（实例）是具体的，实际的，代表一个具体变量
+
+### 7.2.2 结构体的内存布局
+
+执行var cat1 Cat（**创建一个Cat实例）后，便开辟了一个cat1结构体的空间**，cat1直接指向这个空间。（也因此可以知道，**结构体struct是值类型**）
+
+<img src="/Users/mac/Desktop/markdown笔记/Mutong-System_Iteration/BackEnd-system/GolangNoteImage/30081715303545_.pic.jpg" alt="30081715303545_.pic" style="zoom:70%;" />
+
+
+
+
+
+### 7.2.3 声明结构体
+
+```go
+type 结构体名称 struct{
+  字段名称 字段类型
+}
+```
+
+**注意⚠️：**
+
+1）字段**一般是基本数据类型、数组，也可以是引用类型。**
+
+2）不同结构体变量字段独立，互不影响。
+
+3）创建一个结构体变量后，如果没有赋值，对于布尔类型、字符串、数值、数组（和它的元素类型相关）来说，它们为对应数据类型的默认值；**对于指针、slice、map来说，它们均为零值nil，即还没有分配数据空间**。
+
+### 7.2.4 创建结构体变量和访问结构体字段
+
+```go
+type Person struct{
+  Name string
+  Age int
+}
+//方式一
+var person Person
+
+//方式二
+var person Person = Person{"mary", 20}
+
+//方式三
+var person *Person = new(Person) //person此时是一个指针
+(*person).Name = "Smith" //❗️或 person.Name = "Smith"
+(*person).Age = 30 //❗️或 person.Age = 30
+//⚠️❗️能够两种写法等价是因为go底层对person进行了取值运算，为了程序员方便
+//🎺插播一条：(*person).Age是对的，不能❌写成*person.Age,因为.的优先级比*的优先级要高。
+
+//方式四
+var person *Person = &Person{}
+(*person).Name = "Smith" //❗️或 person.Name = "Smith"
+(*person).Age = 30 //❗️或 person.Age = 30
+//⚠️❗️能够两种写法等价是因为go底层对person进行了取值运算，为了程序员方便
+```
+
+
+
+### 7.2.5 结构体的使用细节
+
+注意⚠️：
+
+1）**结构体的所有字段在内存中是连续的。**
+
+2）**结构体是用户单独定义的类型。**如果一个类型的结构体想转换为另一个类型的结构体，它们的**字段必须完全相同**（个数、名称、类型都一样）。
+
+3）结构体使用type定义结构体，**即使字段完全相同，type名不同，golang也认为是不同的数据类型。**只能强转，不能直接赋值。
+
+4）struct的每个字段上，可以写上一个**tag**，该tag可以通过**反射机制**获取，常见的使用场景就是**序列化**（就是将变量变成一个字串，比如变成json字串）和反序列化。
+
+```go
+//使用场景：一般从服务器返回给浏览器是一个json，而将struct处理为json首字母依然是大写，但是首字母大写的字段名返回给比如jquery，php等用不习惯；但是struct的字段首字母大写有利于这个变量能狗全局访问。因此出现这个矛盾，需要用到tag来解决。
+import "encoding/json"
+
+type Monster struct
+//加上tag，注意是反引号
+  Name string `json:"name"`
+  Age int `json:"age"`
+}
+
+
+func main(){
+  monster := Monster{"niu",89}
+  
+  // 将monster变量序列化为json格式字串
+  //注意⚠️：为什么Monster中的Name和Age首字母一定不能小写？因为调用json.Marshal相当于用别的包调用了Monster结构体，所以一定要大写。
+  //json.Marshal函数中使用到了反射
+  jsonStr, err := json.Marshal(monster)
+  
+  if err != nil{
+    fmt.Prinln("ok")
+  }
+  //注意⚠️：由于json.Marshal方法转回来的是一个byte数组，所以我们要有9哦那个string强转一下
+  fmt.Println("jsonStr",string(jsonStr))
+}
+
+
+```
+
+## 7.3 方法
+
+### 7.3.1 方法基础概念
+
+**定义：**Golang中的**方法是指作用在指定数据类型上的**（即和指定数据类型绑定），因此**自定义类型，都可以有方法**，而不仅仅是struct。
+
+### 7.3.2 方法的声明和调用
+
+**方法的声明（定义）：**
+
+```go
+//❗️receiver就是type类型的一个变量（实例）
+//❗️这个方法就和type类型进行绑定（也就是该方法作用于type类型）
+//❗️type可以是结构体，也可以是其他自定义类型
+func (receiver type) methodName (参数列表) (返回值列表){
+  方法体
+  return 返回值//return语句不是必须的
+}
+
+```
+
+**注意⚠️：**
+
+1）方法的调用和传参机制和函数基本一样，不一样的是 **变量调用方法时，该变量也会当作实参传递给方法。**（如果变量是值类型则值拷贝，如果是引用类型则地址拷贝）
+
+2）为了提高效率，**通常我们的方法和结构体的指针类型绑定**。
+
+```go
+type A struct{
+  Num int
+
+//test方法与A类型结构体变量的指针进行绑定
+func (a *A) test() {
+  fmt.Println((*a).Num)
+}
+
+func main(){
+  var a A
+  a.Num = "tom"
+  //调用A类型指针的方法test：相单于把a的地址传入test()
+  (&a).test() //❗️或a.test()，golang底层依然会判断其为指针类型，然后进行取址操作
+}
+```
+
+3）方法只能通过与其绑定的自定义类型的变量来调用，而不能直接调用，也不能使用其他自定义类型变量来调用。
+
+4）结构体类型是值类型，在方法调用中遵守值拷贝传递方式。
+
+5）**自定义类型都可以有方法**，而不仅仅是struct，比如int，float等都可以有方法。
+
+```go
+type INT int
+
+func (i INT) print(){
+  fmt.Println("i=",i)
+}
+
+func main(){
+  var i INT = 10
+  i.print()
+}
+```
+
+6）如果一个自定义类型实现了String()这个方法( 重点是这个方法名叫String，方法内部怎么写还是自定义的 )，那么再fmt.Println这个自定义类型的变量时，会默认调用这个变量的String()进行输出。（那么假如是这个自定义类型的指针与String方法绑定的话，调用fmt.Println就要在后面传入这个自定义类型的变量的地址了）
+
+### 7.3.3 函数和方法的区别
+
+**1）调用方式不同**
+
+​	**函数调用方式：** 函数名(实参列表)
+
+​	**方法调用方式：**变量.方法名(实惨列表)
+
+**2）传递和接收处理细微差别（易混淆）**
+
+​	**函数：**接受者为值类型，那就一定不能传指针类型数据；接受者为指针类型，那就一定不能传值类型数据。
+
+​	**方法：**接收者为值类型，也可以使用指针类型变量调用方法；接受者为指针类型，也可以使用值类型变量调用方法。
+
+​		（本质上的原因是在进行方法调用时，golang底层会进行自动优化。比如应该使用&p调用方法，你使用p调用，golang底层也会帮你弄成&p）
+
+​		（也就是说最终到底是值拷贝还是地址拷贝，取决于绑定的是 自定义类型 还是 自定义类型的指针）
+
+## 7.4 工厂模式
+
+**说明**：Golang的结构体没有构造函数，通常使用工厂模式来解决。
+
+**应用场景：**当结构体名称首字母小写，但又想在其他包使用这个结构体，则使用工厂模式解决。
+
+**工厂模式思想：**就相当于变量名首字母小写了，在本包再写一个**函数**首字母大写，这个函数能导出这个变量名（一般是指针），然后这个函数可供别包调用。
+
+```go
+package model
+
+type student struct{
+  Name string
+  Score float64
+}
+//❗️工厂模式，这里实际是一个函数。
+//❗️不能用方法，使用方法要先有一个student结构体，而这个函数是创建导出student结构体指针的。
+//（这一步之后就可以使用方法）
+func NewStudent(n string, s float64) *student{
+  return &student{
+    Name : n
+    Score : s
+  }
+}
+
+-----------------------------------------------
+package main
+import "go_code/model"
+
+func main(){
+  var stu = model.NewStudent("tom",99)
+  //注意stu是一个student结构体指针，打印的时候需要*取值
+  fmt.Println(*stu)
+}
+```
+
+# 8 面向对象编程（下）
+
+**抽象：**定义结构体的时候，把一类事物的共有属性（字段）和行为（方法）提取出来，形成一个物理模版（结构体）。这种研究问题的方法就是抽象。
+
+## 8.1 面向对象三大特性
+
+### 8.1.1 封装
+
+**定义：**把抽象出的**字段和对字段的操作**封装在一起，数据被保护在内，程序的其他包直邮通过被授权的操作（方法），才能对字段操作。
+
+**封装的好处：**
+
+1）隐藏实现的细节
+
+2）可以对数据进行验证（判断是否合理，合理才继续操作），保证安全合理。
+
+**golang封装的实现步骤：**
+
+1）将结构体、字段（属性）的首字母小写（不能导出了，private）
+
+2）给结构体所在包提供一个**工厂模式**函数，首字母大写（类似构造函数），用于在别包**能够创建并获取结构体**（一般为结构体指针）。
+
+3）提供一个首字母大写的**Set**方法（能导出，public），用于**对属性判断并赋值**。
+
+4）提供一个首字母大写的**Get**方法（能导出，public），用于**获取属性的值**。
+
+**注意⚠️：**golang中没有特别强调封装（和java不同），golang本身对面向对象的特性做了简化。
+
+
+
+### 8.1.2 继承
+
+**继承的好处**：
+
+1）代码复用性提高
+
+2）代码的扩展性和维护性提高
+
+**继承示意图：**
+
+<img src="/Users/mac/Desktop/markdown笔记/Mutong-System_Iteration/BackEnd-system/GolangNoteImage/WeChat66ddfaf88e29628109a6a5c186b7051b.png" alt="WeChat66ddfaf88e29628109a6a5c186b7051b" style="zoom:30%;" />
+
+**golang如何实现继承：**
+
+1）把多个结构体的共有特性提取出来形成一个共有结构体
+
+2）然后在结构体中嵌入这个匿名的共有结构体，golang中结构体可以直接访问匿名结构体的字段和方法，从而实现了继承特性。
+
+**嵌套匿名结构体的基本语法：**
+
+```go
+type Goods struct{
+  Name string
+  Price int
+}
+type Book struct{
+  Goods //1.嵌套匿名结构体Goods
+  Writer string
+}
+----------------
+//--假如返回了Book类型的book结构体--
+bookName := book.Goods.Name //2.使用匿名结构体Goods,❗️可简化为book.Name
+bookWriter := book.Writer
+```
+
+**多重继承概念：**如果一个struct嵌套了多个匿名结构体，那么该结构体可以直接访问嵌套的匿名结构体的字段和方法，从而实现了多重继承。
+
+**注意⚠️：**
+
+1）结构体可以使用嵌套匿名结构体所有的字段和方法（首字母大写或小写的字段、方法，都可以使用）（可以理解为首字母大小写区分的是外包是否能使用，不严格为其他编程语言中的private和public）
+
+2）匿名结构体字段访问可以简化。比如b.A.Name（A是B的嵌套匿名结构体）可以简化为b.Name
+
+3）当结构体和其嵌套的匿名结构体有相同的字段或者方法时，编译器采用**就近访问原则**访问。（那肯定更近的是结构体的字段和方法）（如果期望访问到匿名结构体的字段和方法，这种情况下就不能简写，老老实实用匿名结构体访问方法）
+
+4）结构体嵌入两个（或多个）匿名结构体，且存在**两个匿名结构体有相同的字段和方法**，**且结构体本身没有同名字段和方法**，访问时，必须指明匿名结构体名字，否则编译报错。
+
+5）如果一个struct嵌套了一个有名结构体，这种模式叫**组合**。组合关系下，访问组合的结构体的字段或方法，必须带上结构体名字( 不会像匿名结构体自动查找 )。
+
+```go
+type A struct{
+  Name string
+  Age int
+}
+type C struct{
+  a A//1.嵌套有名结构体
+}
+--------------
+//--假如得到一个C类型的结构体c--
+name := c.a.Name//2.访问有名结构体字段
+```
+
+6）嵌套匿名结构体后，依然可以直接在创建结构体变量时，指定各个匿名结构体字段的值。
+
+```go
+type Goods struct{
+  Name string
+  Price int
+}
+type Book struct{
+  Goods 
+  Writer string
+}
+
+-------------------
+//创建结构体变量时直接赋值
+//第一种写法
+book := Book{
+  Goods{"《Love》",20},
+  "lmt",
+}
+//第二种写法
+book := Book{
+  Goods{
+    Name:"《Love》",
+    Price:20,
+  },
+  "lmt",
+}
+```
+
+7）golang允许将基本数据类型作为字段匿名嵌入在结构体中。
+
+```go
+type A struct{
+  Name string
+  Age int
+}
+type C struct{
+  A
+  int //1.将基本数据类型的匿名字段嵌入到结构体中
+}
+-------------
+//--假如得到一个C类型的结构体c--
+c.int = 2 //2.给基本数据类型的匿名字段进行赋值
+```
+
+8）为了保证代码的简洁性，**尽量不要使用多重继承**。
+
+### 8.1.3 多态
+
+**定义：**变量（实例）有多种形态。在Go中，多态特征是通过**接口**实现的（统一的接口通过传入的参数来调用不同的实现，这时接口变量就呈现不同的形态，也就是多态特征）。
+
+**接口体现多态的两种形式**：
+
+1）**多态参数：**比如Usb接口类型的usb参数，既可以接收手机变量，又可以接收相机变量。
+
+2）**多态数组：**比如Usb数组（其中存放Usb类型元素的数组），既可以存放手机结构体，又可以存放相机结构体。
+
+## 8.2 接口interface
+
+### 8.2.1 快速入门案例
+
+```go
+//声明/定义一个接口
+type Usb interface{
+  Start()
+  Stop()
+}
+
+//手机
+type Phone struct{
+}
+//让phone实现Usb接口方法
+func (p Phone) Start(){
+  fmt.Println("手机开始工作...")
+}
+func (p Phone) Stop(){
+  fmt.Println("手机停止工作...")
+}
+func (p Phone) Call(){
+  fmt.Println("手机打电话...")
+}
+//相机
+type Camera struct{
+}
+//让camera实现Usb接口方法
+func (c Camera) Start(){
+  fmt.Println("相机开始工作...")
+}
+func (c Camera) Stop(){
+  fmt.Println("相机停止工作...")
+}
+//计算机
+type Computer struct{
+}
+//working方法，接收Usb接口类型变量
+//❗️只要是 实现了Usb接口（实现了Usb接口，就是说 实现了Usb接口声明的所有方法）
+func (c Computer) Working(usb Usb){
+  //通过usb接口变量来调用start和stop方法
+  usb.Start()
+  //👇类型断言和检测机制使用
+  //如果传入的usb接口指向Phone类型，则将它转换为Phone类型，赋值给phone，然后调用Call()方法
+  if phone, ok := usb.(Phone); ok {
+    phone.Call()
+  }
+  usb.Stop()
+}
+
+func main(){
+  computer := Computer{}
+  phone := Phone{}
+  camera := Camera{}
+  
+  computer.working(phone)
+  computer.working(camera)
+}
+
+```
+
+### 8.2.2 接口基本概念
+
+**定义：**
+
+1）interface类型可以**定义一组方法**，但是这些方法**不需要实现**。
+
+2）并且interface**不能包含任何变量**。
+
+3）**在某个自定义类型（比如结构体）**要使用的时候，再根据具体情况**把这些方法全部实现**（接口的所有方法都要实现）。
+
+**基本语法：**
+
+```go
+//声明/定义接口，定义一组方法但不需要实现
+type 接口名 interface{
+  method1(参数列表)返回值列表
+  method2(参数列表)返回值列表
+}
+//在自定义类型（如结构体）实现接口所有方法
+func (t 自定义类型) method1(参数列表)返回值列表{
+  //方法实现
+}
+func (t 自定义类型) method2(参数列表)返回值列表{
+  //方法实现
+}
+```
+
+**注意⚠️：**
+
+1）接口里的所有方法都没有方法体（一定是**定义一组方法，不能具体实现**）。
+
+2）**接口本身不能创建实例（变量）**，但是**可以指向一个实现了该接口的自定义类型的变量（实例）**。
+
+```go
+type A interface{
+  Say()
+}
+type Stu struct{
+}
+func (stu Stu) Say(){
+  fmt.Println("Say()")
+}
+
+func main(){
+  //❗️像下面这样调Say是用不了的，因为接口本身没法创建实例，也就是a不是一个实例（变量）
+  // var a A ❌
+  // a.Say() ❌
+  
+  //❗️结构体变量stu（实例），实现了Say()，也就实现了A接口
+  //❗️var a A = stu不是赋值，而是让a接口指向Stu类型变量stu，然后就能调Say()了
+  var stu Stu //✅
+  var a A = stu //✅
+  a.Say() //✅
+}
+
+```
+
+3）接口体现程序设计的 **多态和高内聚低耦合** 的思想。（高内聚：所有方法实现写在函数内；低耦合：程序之间耦合性低）
+
+4）golang中的接口**不需要显式实现**。只要一个变量，**含有接口类型中所有方法**，那么这个变量就**实现了这个接口**。
+
+5）只要是自定义数据类型，就可以实现接口，不仅仅是结构体类型。（自定义类型就可以绑定方法，只要把接口的方法实现了就实现了这个接口）
+
+6）一个自定义类型可以实现多个接口。（把多个接口中的所有方法实现就好）
+
+7）golang接口中不能有任何变量。
+
+8）一个接口（比如A）可以**继承**多个接口（比如B、C），此时如果要实现A接口，也必须将B、C接口的方法全部实现。（这种情景下，这个自定义类型相当于实现了A、B、C三个接口）
+
+```go
+type B interface{
+  test1()
+}
+type C interface{
+  test2()
+}
+//A接口继承B和C接口
+type A interface{
+  B
+  C
+  test3()
+}
+```
+
+9）**interface类型是一个指针（引用类型）**，如果没有对interface初始化就使用会输出nil。
+
+10）空接口interface{}没有任何方法，所以可以说**所有类型都实现了空接口**。（也就是**可以把任意类型变量赋给空接口**）（❗️比如一些系统包说接受的类型为interface{}，说明可以接受任何数据类型变量）
+
+### 8.2.3 接口最佳实践
+
+**要求：**实现对Hero结构体切片（就是一个切片里面都放的结构体）的排序:sort.Sort(data Interface)（这个系统函数接受一个实现Len()、Lees()、Swap()的接口）
+
+```go
+//1.声明Hero结构体
+type Hero struct{
+  Name string
+  Age int
+}
+//2.声明一个Here结构体切片类型
+type HeroSlice []Hero
+//3.实现Interface接口
+//Len()获取切片的长度
+func (hs HeroSlice) Len() int {
+  return len(hs)
+}
+//Lees()决定使用什么标准进行排序
+func (hs HeroSlice) Lees(i,j int) bool {
+  return hs[i].Age < hs[j].Age//根据Age从小到大排序
+}
+//Swap()交换两个元素
+func (hs HeroSlice) Swap(i,j int) {
+  temp := hs[i]
+  hs[i] := hs[j]
+  hs[j] := temp
+  //上面👆三句等价于：hs[i],hs[j] = hs[j],hs[i]
+}
+
+func main(){
+  //4.初始化赋值一个结构体切片heros
+  var heroes HeroSlice
+  for i := 0; i < 10; i++{
+    hero := Hero{
+      Name : fmt.Sprintf("英雄~%d",rand.Intn(100)),//❗️妙：不仅赋给了Name还会打印出来
+      Age : rand.Intn(100)
+    }
+    heroes = append(heroes,hero)
+  }
+  
+  //5.调用sort.Sort()
+  sort.Sort(heros)
+}
+```
+
+### 8.2.4 实现接口和继承比较
+
+1）实现接口是对继承机制的补充。
+
+（当A结构体继承了B结构体，那么A结构体就自动的继承了B结构体的字段和方法，并且可以直接使用。当A结构体需要扩展功能，同时不希望去破坏继承关系，则可以去实现某个接口即可。）
+
+2）接口和继承解决的问题不同。
+
+**继承的价值**：解决代码的**复用性和可维护性**。
+
+**接口的价值**：**设计**，设计好各种规范（**方法**），让其他自定义类型去实现这些方法。
+
+3）接口比继承更加灵活。
+
+继承要满足 is - a 的关系，而接口只需要满足 like - a 的关系。
+
+4）接口在一定程度上实现代码解耦。
+
+（尤其Golang中，很松散灵活）
+
+## 8.3 类型断言
+
+**定义：**由于接口是一般类型，不知道具体类型，如果要转成具体类型，就需要类型断言。
+
+**带检测机制的类型断言案例：**
+
+```go
+var x interface{} //x为一个空接口类型
+var b float64 = 1.1 
+x = b // 空接口可以接收任意类型，接口x指向变量b
+//❗️类型断言：判断接口x是否是指向float64类型变量，如果是则将x转换为float64类型，然后赋值给y
+y, ok := x.(float64) //不带检测 y := x.(float64)
+if ok{
+  fmt.Println("Success!")
+}else{
+  fmt.Println("Wrong!")
+}
+//👇这种写法等价于上面，也是ok的
+// if y, ok := x.(float64); ok {
+// }else{
+// }
+
+```
+
+**类型断言最佳实践1：**见8.2.1快速入门案例。
+
+**类型断言最佳实践2：**
+
+```go
+//⚠️这个传参表示 不能确定传入的空接口参数个数
+//⚠️传入的参数就是int、string呀这些类型，这是因为空接口能接收一切类型
+func TypeJudge(items... interface{}){
+  for index, x := range items {
+    switch x.(type){//⚠️x.(type)类型断言表示 获取接口x指向的类型
+     case bool :
+      fmt.Println("bool")
+     case float32 :
+      fmt.Println("float64")
+     default:
+      fmt.Println("类型不确定") 
+    }
+  }
+}
+
+func main(){
+  var name string = "lmt"
+  var age int = 20
+  TypeJudge(name,age)
+}
+```
+
+# 9 项目实践
+
+## 9.1 项目开发流程
+
+<img src="/Users/mac/Library/Containers/com.tencent.xinWeChat/Data/Library/Application Support/com.tencent.xinWeChat/2.0b4.0.9/ec9416860931e19635b4b3bdc058ef8c/Message/MessageTemp/ec9416860931e19635b4b3bdc058ef8c/Image/30411715667063_.pic_hd.jpg" alt="30411715667063_.pic_hd" style="zoom:50%;" />
+
+
+
+## 9.2 项目1: 家庭收支记账软件
+
+### 9.2.1 项目需求
+
+1）文本界面
+
+2）能够记录家庭的收入、支出，并能够打印收支明细表
+
+### 9.2.2 项目界面
+
+<img src="/Users/mac/Desktop/markdown笔记/Mutong-System_Iteration/BackEnd-system/GolangNoteImage/30511715692232_.pic.jpg" alt="30511715692232_.pic" style="zoom:50%;" />
+
+### 9.2.3 项目代码实现
+
+见goProjects/project01
+
+## 9.3 项目2: 客户信息管理系统
+
+### 9.3.1 项目需求
+
+1）文本界面
+
+2）该软件能够实现对客户对象的插入、修改和删除（切片实现），并能够打印客户明细表
+
+### 9.3.2 项目界面
+
+<img src="/Users/mac/Desktop/markdown笔记/Mutong-System_Iteration/BackEnd-system/GolangNoteImage/30531715738166_.pic.jpg" alt="30531715738166_.pic" style="zoom:50%;" />
+
+### 9.2.3 项目设计-程序框架图
+
+<img src="/Users/mac/Desktop/markdown笔记/Mutong-System_Iteration/BackEnd-system/GolangNoteImage/30541715751859_.pic_hd.jpg" alt="30541715751859_.pic_hd" style="zoom:50%;" />
+
+**程序框架图描述：**分析先从右边蓝色部分从上倒下，但是具体实现是按左边绿色的从下到上。
+
+# 10 文件操作
+
+## 10.1 文件基本介绍
+
+**文件：**文件就是数据源（保存数据的地方）。既可以保存图片，也可以保存视频、声音。
+
+**流：**数据在数据源（文件）和程序（内存）之间经历的路径。
+
+**输入流：**数据从数据源（文件）到程序（内存）的路径。（读文件）
+
+**输出流：**数据从程序（内存）到数据源（文件）的路径。（写文件）
+
+**golang中操作文件：**os.File封装了所有文件操作的方法。（file是一个结构体）
+
+## 10.2 文件具体操作
+
+### 10.2.1 打开文件和关闭文件
+
+```go
+import (
+	"os",
+  "bufio"
+)
+func main(){
+  
+  /*打开文件*/
+  //⚠️file可以叫 file对象、file指针、file文件句柄
+  file, err := os.Open("d:/test.txt")
+  
+  /*关闭文件*/
+  //⚠️当函数退出时，及时关闭file
+  defer file.Close() //❗️要及时关闭file句柄，否则会有内存泄漏
+  // 也可以写为 err := file.Close()
+   
+}
+```
+
+### 10.2.2 读取文件操作
+
+**1）缓冲读取文件内容**（适用于文件较大的情况）
+
+```go
+import(
+"bufio"
+)
+func main(){
+  //---假设file时os.Open后得到的file指针，同时省略了文件关闭os.Close---
+  //创建*Reader，带缓冲的，默认缓冲区4096个字节
+	reader := bufio.NewReader(file)
+  
+	for {
+    //读到一个换行符就结束（进行下一行循环）
+    str,err := reader.ReadString('\n')
+    if err == io.EOF{//io.EOF表示文件的末尾
+      break
+    }
+}
+```
+
+**2）一次性将文件内容读取到位**（适用于文件较小的情况）
+
+```go
+import (
+	"io/ioutil"
+)
+func main(){
+  filePath := "text.txt"
+  //⚠️ioutil.ReadFile()方法把文件打开关闭都一起封装了，不需要额外操作
+  contentByte, err := ioutil.ReadFile(filePath)
+  fmt.Println(string(contentByte))//❗️
+}
+```
+
+### 10.2.3 写文件操作
+
+**1）缓冲写文件内容**
+
+```go
+import (
+"os",
+ "bufio"
+)
+func main(){
+  filePath = "test.txt"
+  //⚠️os.OpenFile(filePath, fileMode, linux下有用的参数先不管)
+  //❗️fileMode可以组合，给一些例子：
+  //    1⃣️os.O_WRONLY | os.O_CREATE：（没有就）创建，然后写入
+  //    2⃣️os.O_WRONLY | os.O_TRUNC：打开先把内容清掉，然后再写入
+  //    3⃣️os.O_WRONLY | os.O_APPEND：追加内容写入
+  //    4⃣️os.O_RDWR | os.O_APPEND：读写的方式打开，且写入的内容是追加进去
+  file, err := os.OpenFile(filePath, os.O_WRONLY | os.O_CREATE, 0666)
+  
+  //函数结束及时关闭文件
+  defer file.Close()
+  
+  //⚠️写入时使用带缓存的*Writer
+  writer := bufio.NewWriter(file)
+  writer.WriteString("Hello World!\n")
+  //❗️因为writer是带缓存的，因此在调用writer.WriterString方法时内容先写入缓存的
+  //❗️所以需要调用Flush方法，将缓存的数据真正写入到文件中
+  //❗️否则文件中会没有数据！！
+  writer.Flush()
+}
+
+
+```
+
+**2）一次性将文章内容写入**
+
+```go
+import (
+	"io/ioutils"
+)
+
+func main(){
+  filePath = "d:/kkk.txt"
+  //第三个参数是写入模式，linux操作系统下有用
+  err := ioutil.WriteFile(filePath,"你好",0666)
+}
+```
+
+### 10.2.4 判断文件是否存在
+
+```go
+import (
+	"os"
+)
+//❗️os.Stat()函数用于获取文件或目录的信息
+func PathExist(path string) (bool, error){
+  //相当于利用这个函数的err信息，忽略值信息
+  _, err := os.Stat(path)
+  if err == nil{// 文件或目录存在
+    return true,nil
+  }
+  if os.IsNotExist(err){// err信息指文件或目录不存在
+    return false, nil
+  }
+  return false, err// 其他错误
+}
+```
+
+### 10.2.5 拷贝文件
+
+```go
+import (
+	"fmt",
+  "os",
+  "io",
+  "bufio"
+)
+//自定义函数
+func CopyFile(dstFileName string, srcFileName string)(written int64, err error){
+  srcFile, err := os.Open(srcFileName)
+  if err != nil{
+    fmt.Prinf("Open file err=%v\n",err)
+  }
+  reader := bufio.NewReader(srcFile)
+  defer srcFile.Close()//及时关闭文件句柄
+  
+  //打开dstFile，❗️因为可能不存在需要创建所以使用os.OpenFile()方法指定mode
+  dstFile, err := os.OpenFile(dstFileName, os.O_WRONLY | os.O_CREATE, 0666)
+  if err != nil{
+    fmt.Printf("Open file err=%v\n", err)
+    return
+  }
+  writer := bufio.NewWriter(dstFile)
+  defer dstFile.Close//及时关闭文件句柄
+  
+  //⚠️io包的copy函数，接受一个writer和一个reader
+  //❗️可以拷贝 图片、视频、文本
+  return io.Copy(writer,reader)
+}
+```
+
+## 10.3 命令行参数
+
+### 10.3.1 获取命令行各个参数
+
+**使用下面👇代码的方式：**
+
+1）将这个go文件打包成可执行文件（go build main.go）
+
+2）终端输命令行好调用刚打包的可执行文件（main Mota hahaha 99）
+
+```go
+import (
+	"os",
+  "fmt"
+)
+
+func main(){
+  fmt.Println("命令行参数有",len(os.Args))//4
+  for i, v := range os.Args{
+    fmt.Printf("args[%v]=%v",i,v)// main, Mota, hahaha, 99
+  }
+}
+```
+
+**注意⚠️：**这种方式简单粗暴，但并不方便。比如无法识别指定参数形式（比如-o）、只能严格按照命令行参数顺序解析参数。
+
+### 10.3.2 flag包解析命令行参数
+
+**使用下面👇代码的方式：**
+
+1）将这个go文件打包成可执行文件（go build main.go）
+
+2）终端输命令行好调用刚打包的可执行文件（main -pwd 12345 -u root -h 127.0.0.5 -port 8080）
+
+```go
+import (
+	"flag"
+)
+func main(){
+  var user string
+  //var pwd string
+  //var host string
+  var post int
+  
+  //注册flag
+  //❗️&user：接受命令行中输入的 -u 后面的参数值
+  //❗️"u"：就是 -u 指定参数
+  //❗️""：默认值
+  //❗️"用户名，默认为空"：说明描述
+  flag.StringVar(&user, "u", "", "用户名，默认为空")
+  flag.IntVar(&post, "p", 3306, "端口号，默认为3306")
+  
+  //❗️解析注册的flag，然后才能使用其解析得到的值
+  flag.Parse()
+}
+```
+
+**注意⚠️：**使用简单方便灵活。不需要按照参数顺序解析访问值，直接根据指定参数就好。
+
+## 10.4 JSon
+
+### 10.4.1 json基本介绍和应用场景
+
+**定义：**JSON（JavaScript Object Notation）是一种**轻量级的数据交换格式**。2001年推广使用，现在已经是**主流的数据格式**。
+
+**应用场景：**
+
+<img src="/Users/mac/Desktop/markdown笔记/Mutong-System_Iteration/BackEnd-system/GolangNoteImage/30731715924851_.pic_hd.jpg" alt="30731715924851_.pic_hd" style="zoom:50%;" />
+
+### 10.4.2 json数据格式
+
+1）在JS语言中，一切都是对象。因此，**任何数据类型都可以通过JSON来表示**（比如字符串、数字、对象、数组、map、结构体）。
+
+2）JSON**键值对**是用来保存数据的一种方式。
+
+```go
+//示例
+{
+  "key1":val1,
+  "key2":[val2,val3,val4],
+  "key3":{
+    "key3_1":val5,
+    "key3_2":val6
+  }
+}
+```
+
+3）https://www.json.cn/网站可以验证一个json格式的数据是否正确（尤其我们编写的json格式数据比较复杂的时候）。
+
+### 10.4.3 结构体、map、切片 序列化
+
+```go
+import (
+  	"encoding/json"
+)
+//----------结构体序列化-----------
+type Monster struct{
+  //⚠️加一个tag，序列化后json的key就为制定的tag(使用的反射机制)
+  //⚠️Name一定要首字母大写的，否则后续序列化传入Marshal包（跨包使用 ）有问题
+  Name : string `json:"monster_name"`
+  Age : int `json:"monster_age"`
+}
+monster := Monster{
+  Name : "牛魔王",
+  Age : 200,
+}
+//⚠️json.Marshal()中可以传入任何数据类型变量
+//❗️传入monster的指针变量使得能够真正修改到monster数据（结构体是值类型）
+//❗️返回的data是一个byte切片，输出我们想看到的需要string(data)
+data, err := json.Marshal(&monster) 
+
+//------------map序列化-------------
+//❗️这里map[string]interface{}说明键为string类型，值为空接口类型（即任意类型！）
+var a map[string]interface{}
+//注意使用map需要先make
+a = make(map[string]interface{})
+a["name"] = "红孩儿"
+a["age"] = 20
+//❗️注意这里不再需要传地址了，因为map本身是引用类型
+data, err := json.Marshal(a) 
+
+//------------切片序列化-------------
+var slice []map[string]interface{}
+var m1 map[string]interface{}
+m1 = make(map[string]interface{})
+m1["name"] = "红孩儿"
+m1["age"] = 20
+slice = append(slice,m1)
+
+var m2 map[string]interface{}
+m2 = make(map[string]interface{})
+m2["name"] = "白骨精"
+m2["age"] = 2000
+slice = append(slice,m2)
+//❗️注意这里不再需要传地址了，因为slice本身是引用类型
+data, err := json.Marshal(slice) 
+```
+
+### 10.4.4 json反序列化
+
+```go
+import (
+  	"encoding/json"
+)
+//-----------json反序列化为结构体-----------
+type Monster struct{
+  Name : string
+  Age : int 
+}
+//示例str，项目中是根据网络传输获取、或者根据读取文件获取
+str := "{\"Age\":800,\"Name\":\"牛魔王\"}"
+//定义一个Monster实例
+var monster Monster
+//反序列化
+//❗️注意这里要先将str转为byte数组
+//❗️注意要传入monster的地址，因为要真正改变monster实例变量
+err := json.Unmarshal([]byte(str), &monster)
+
+//------------json反序列化为map--------------
+str := "{\"Age\":800,\"Name\":\"牛魔王\"}"
+//声明/定义一个map类型变量
+var a map[string]interface{}
+//反序列化
+//⚠️反序列化map不需要单独make，因为make操作已经被封装到了Unmarshal函数当中
+err := json.Unmarshal([]byte(str), &a)
+
+//------------json反序列化为切片--------------
+str := "[{\"Age\":800,\"Name\":\"牛魔王\"},{\"Age\":200,\"Name\":\"红孩儿\"}]"
+//定义一个切片类型
+var slice []map[string]interface{}
+//⚠️依然不需要make，因为map相关的make操作全部被封装到了Unmarshal函数当中了
+err := json.Unmarshal([]byte(str), &slice)
+```
+
+**注意⚠️：**
+
+1）在反序列化一个json字符串时，要确保**反序列化后的数据类型和原来序列化前的数据类型一致**。（但对于struct，假如原本数据类型是Monster，反序列后是Dog，**但Monster和Dog的字段完全相同，那也是可以的**）
+
+# 11 单元测试
+
+## 11.1 传统测试函数
+
+**缺点：**
+
+1）**不方便，**需要在main函数中调用，这样就可能需要修改main函数，如果项目正在运行，可能需要停止项目。
+
+2）**不利于管理，**因为当我们测试多个函数或多个模块时，都需要写在main函数，不利于我们管理和清晰我们的思路。
+
+## 11.2 单元测试快速入门
+
+### 11.2.1 单元测试基本介绍
+
+1）go语言自带轻量级测试框架testing，和自带的go test命令，实现 单元测试 和 性能测试。
+
+2）通过单元测试可以解决：a.确保每个函数可运行，且运行结果正确；b.确保写出来的代码性能是好的；c.及时发现程序设计或实现的逻辑错误；d.能进行性能测试，让程序在高并发情况下还能保持稳定。
+
+### 11.2.2 单元测试细节说明
+
+**单元测试执行流程：**
+
+<img src="/Users/mac/Desktop/markdown笔记/Mutong-System_Iteration/BackEnd-system/GolangNoteImage/30751716015395_.pic_hd.jpg" alt="30751716015395_.pic_hd" style="zoom:50%;" />
+
+**注意⚠️：**
+
+1）测试用例文件名必须符合**xxx_test.go**格式；测试用例函数必须符合**TestXxx(t *testing.T){}**（Xxx一般是被测试的函数名）。
+
+2）**测试用例函数写在测试用例文件当中**，一个测试用例文件可以包含多个测试用例函数。
+
+3）被测试的函数一般写在xxx.go文件（xxx.go和xxx_test.go中xxx是对应相同的）。
+
+4）运行测试用例指令：
+
+​	go test（运行正确无日志，错误会输出日志）
+
+​	go test -v （运行正确或错误，都输出日志）
+
+5）当出现错误时，可以使用**t.Fatalf来格式化输出错误信息，并退出程序**；使用t.Logf方法可以输出相应日志
+
+6）测试用例函数没有放在main函数中，但也会被调用执行。（因此优于传统测试方法）
+
+7）PASS表示测试用例运行成功，FALL表示测试用例运行失败。
+
+8）测试单个文件，要带上被测试的源文件 go test -v cal_test.go cal.go（否则默认把包里面写了test用例的都给测了）；测试单个方法 go test -v -test.run TestXxx（注意test.run后面跟的是测试用例函数）。 
+
+### 11.2.3 单元测试综合案例
+
+```go
+//----------------monster.go------------------
+package monster
+import (
+	"encoding/json",
+  "io/ioutil"
+)
+type Monster struct{
+  Name string
+  Age int
+}
+func (this *Monster) Store(){
+  //序列化
+  data, err := json.Marshal(this)//❗️注意这里data是byte数组
+  if err != nil{
+    return err
+  }
+  //保存到文件
+  filePath = "test.ser"
+  err := ioutil.WriteFile(filePath,data,0666)//❗️注意这里data是byte数组
+  if err != nil{
+    return err
+  }
+  return "ok"
+}
+
+func (this *Monster) ReStore(){
+  //读取文件内容
+  filePath = "test.ser"
+  data, err := ioutil.ReadFile(filePath)
+  if err != nil{
+    return err
+  }
+  //反序列化
+  err := json.Unmarshal(data,this)
+  if err != nil{
+    return err
+  }
+  return "ok"
+  
+}
+//----------------monster_test.go------------------
+import (
+	"testing"
+)
+
+func TestStore(t *testing.T){
+  monster := &Monster{
+    Name : "牛魔王",
+    Age :10,
+  }
+  res := monster.Store()
+  if res != "ok" {
+    //输出错误信息，并且终止程序
+    t.Fatalf("monster.Store() 错误，错误信息为=%v",res)
+  }
+  t.Logf("monster.Store() 测试成功！")
+}
+
+func TestReStore(t *testing.T){
+  var monster Monster
+  res := monster.ReStore()
+  if res != "ok" {
+    //输出错误信息，并且终止程序
+    t.Fatalf("monster.Store() 错误，错误信息为=%v",res)
+  }
+  t.Logf("monster.Store() 测试成功！")
+}
+```
+
+# 12 goroutine(协程)和channel(管道)
+
+## 12.1 goroutine-基本介绍
+
+### 12.1.1 进程和线程说明
+
+1）**进程** 就是程序在操作系统中的一次执行过程，是系统进行资源分配和调度的基本单位。
+
+2）**线程** 是进城的一个执行实例，是程序执行的最小单元，它是比进程更小的能独立运行的基本单位。
+
+3）一个进程可以 创建 和 销毁 多个线程，**同一个进程中的多个线程可以<u>并发</u>执行**。
+
+4）一个程序至少有一个进程，一个进程至少有一个线程。
+
+### 12.1.2 进程和线程关系图
+
+<img src="/Users/mac/Desktop/markdown笔记/Mutong-System_Iteration/BackEnd-system/GolangNoteImage/30771716034796_.pic.jpg" alt="30771716034796_.pic" style="zoom:50%;" />
+
+### 12.1.3 并发和并行
+
+1）多线程程序在单核（一个CPU）上运行，就是并发。
+
+（比如有多个线程 并发 运行，宏观上似乎同时运行，但微观上看其实是交替运行的，一个时间点只有一个线程任务在运行。）
+
+2）多线程程序在多核（多个CPU）上运行，就是并行。
+
+（比如有多个线程 并行 运行，宏观上同时运行，微观上也是多个任务作用在多个CPU上同时运行的。）
+
+### 12.1.4 go协程和go主线程
+
+1）go主线程（有程序员直接称为线程/也可以理解为进程）：一个go线程上，可以起多个协程，可以理解为，**协程是轻量级的线程（编译器做优化）**。
+
+<img src="/Users/mac/Desktop/markdown笔记/Mutong-System_Iteration/BackEnd-system/GolangNoteImage/30851716085670_.pic.jpg" alt="30851716085670_.pic" style="zoom:90%;" />
+
+2）**go协程的特点：**a.有独立的栈空间 b.共享程序堆空间 c.调度由用户控制 d.协程是轻量级的线程
+
+## 12.2 goroutine-快速入门
+
+```go
+import (
+	"fmt",
+  "strconv",
+  "time"
+)
+
+func test(){
+  for i:=1;i<=10;i++{
+    fmt.Println("test() hello world" + strconv.itoa(i))
+    time.Sleep(time.Second)
+  }
+}
+
+func main(){
+  
+  go test() //开启了一个协程
+  
+   for i:=1;i<=10;i++{
+     fmt.Println("main() hello world" + strconv.itoa(i))
+     time.Sleep(time.Second)
+  }
+}
+```
+
+**实现的效果**：main主线程和test协程同时执行。
+
+
+
+<img src="/Users/mac/Desktop/markdown笔记/Mutong-System_Iteration/BackEnd-system/GolangNoteImage/30861716088010_.pic.jpg" alt="30861716088010_.pic" style="zoom:80%;" />
+
+**注意⚠️：**
+
+1）主线程是一个物理线程，直接作用在cpu上的，是重量级的，非常耗费cpu资源。
+
+2）协程是由主线程开启的，是轻量级的线程，是逻辑态，对资源消耗相对小。
+
+3）golang的协程机制是重要特点，可以轻松**开启上万个协程**。（其他编程语言的并发机制一般基于线程，开启过多线程，资源耗费大，这里就凸显golang在并发上的优势了）
+
+## 12.3 goroutine-调度模型MPG
+
+1）**M：**操作系统的主线程（物理线程）
+
+2）**P：**协程执行需要上下文
+
+3）**G：**协程
+
+**注意⚠️：**
+
+1）多个M可能挂在一个CPU上并发，也可能挂在不同CPU上并行
+
+2）如果一个协程堵塞，且还有其他协程挂着等待，则会自动**创建**M线程（也可能从已有的线程池中**取出**M1）（❗️这里如果是一个CPU那就是切换并发，如果是多个CPU那就是同时并行），然后将等待的协程挂在新创建的M下执行。
+
+## 12.4 goroutine-设置运行cpu的数目
+
+```go
+import (
+	"runtime"
+)
+func main(){
+  //获取此电脑的逻辑CPU个数
+  cpuNum := runtime.NumCPU()
+  //设置使用的最大CPU数
+  runtime.GOMAXPROCS(cpuNum - 1)
+}
+```
+
+
+
+## 12.5 goroutine-并发（并行）资源竞争问题
+
+### 12.5.1 问题描述
+
+开启多个协程，同时操作同一块数据空间，会发生资源竞争问题。
+
+### 12.5.2 问题解决（让不同goroutine之间进行通讯）
+
+**1）方案一：使用全局变量加锁同步改进程序（低水平）**
+
+```go
+import (
+	"sync"
+)
+
+var (
+  myMap := make(map[int]int,10)
+  //声明一个全局的互斥锁(我用了其他人就不能用) lock
+  //❗️sync是一个包，synchronized同步的意思
+  //❗️Mutex，互斥的意思
+  lock sync.Mutex
+)
+
+func test(n int){
+  res := 1
+  for i:=1;i<=n;i++{
+    res *= i
+  }
+  //加锁
+  lock.Lock()
+  myMap[n] = res
+  //解锁
+  lock.Unlock()
+}
+
+func main(){
+  //开启200个协程完成这个任务
+  for i := 1;i<=20;i++{
+    go test(i)
+  }
+  //❗️主线程休5s，等待所有协程完成任务；否则主线程完成退出协程也会没有完成任务也会被迫退出
+  time.Sleep(time.Second*5)
+  
+  //❗️理论上执行到这里协程已经工作完毕，不会再发生资源竞争问题
+  //❗️但是主线程不知道协程执行完毕（5s是程序员自己制定的），它依然会认为发生了资源竞争（有提示但应该也不影响）
+  //❗️所以这里也要锁一下再读数据
+  lock.Lock()
+  for k,v := range myMap{
+    fmt.Printf("%v的阶乘为%v \n",k,v)
+  }
+  lock.Unlock()
+}
+```
+
+**2）方案二：使用channel解决（高水平）**
+
+
+
+## 12.6 channel-基本介绍
+
+1）channel本质就是数据结构-**队列**（数据先进先出FIFO）。
+
+2）channel本身就是**线程安全**的（多goroutine访问时，不会发生资源竞争问题）。
+
+3）channel有数据类型（比如channel是string类型，则只能存放string类型数据）。
+
+## 12.7 channel-基本使用
+
+### 12.7.1 channel初始化语法
+
+```go
+var intChan chan int
+
+intChan= make( chan int, 3 )
+```
+
+### 12.7.2 channel写入(存放)数据
+
+```go
+intChan <- 10
+```
+
+### 12.7.3 channel读取数据
+
+```go
+var num int
+
+num = <- intChan
+<- intChan //（❗️这个表示取出来扔了不要）
+```
+
+### 12.7.4 channel的关闭
+
+```go
+//⚠️channel关闭后就不能再往里面写数据，但依然可以从该channel中读取数据
+//⚠️close()是golang内置函数
+close(intChan)
+```
+
+### 12.7.5 channel的遍历
+
+```go
+//⚠️遍历时，如果channel没有关闭，则会出现deadlock错误；如果channel已经关闭，遍历完后则正常退出遍历。
+close(intChan)
+//⚠️channel不能使用普通for循环遍历。
+//⚠️channel没有下标一说，所以for-range遍历只返回value。
+for v := range inChan {
+  fmt.Println("v=",v)
+}
+
+```
+
+
+
+### 12.7.6 注意细节⚠️
+
+1）channel本身是**引用类型**。
+
+2）channel必须初始化才能写入数据，即**make后才能使用**。
+
+3）channel的长度（ len(channel) ）是其中存放的数据的个数；channel的容量（ cap(channel) ）是make时开辟的容量大小。
+
+4）channel能存放的数据数量不能超过它的容量。
+
+5）如果channel中没有数据了，还在执行取出数据操作，则会报deadlock错误。
+
+6）channel可以声明/定义为 只读 或 只写（默认是双向的）
+
+```go
+var chan1 chan int //默认双向 可读可写
+chan1 = make(chan int, 10)
+
+var chan2 chan <- int //只写
+chan2 = make(chan int, 10)//⚠️类型还是chan int，只不过声明为了只写
+var chan3 <- chan int //只读 
+chan3 = make(chan int, 10)
+```
+
+7）使用**select**可以解决从管道取数据的阻塞问题。
+
+```go
+func main(){
+  //intChan 并放入10个int数据
+  intChan := make(chan int, 10)
+  for i:=0;i<10;i++{
+    intChan <- i
+  }
+  //stringChan 并放入5个string数据
+  stringChan := make(chan int, 5)
+  for u:=0;i<5;i++{
+    stringChan <- i
+  }
+  //⚠️传统的方法遍历管道，如果这个管道没有关闭则会deadlock
+  //⚠️但是实际开发中，不好判断什么时候关闭管道
+  for {
+  select {
+    case v := <- intChan://如果intChan一直没有关闭，不会一直阻塞二deadlock，会向下执行
+    	fmt.Printf("从intChan中取数据: \d \n",v)
+    case v := <- stringChan:
+    	fmt.Printf("从intChan中取数据: \s \n",v)
+    default:
+    	fmt.Println("都取不到了，程序员可以加入逻辑")
+    	return
+  }
+}
+}
+
+```
+
+8）goroutine中使用recover捕获panic，解决协程中因出现panic而程序崩溃问题。
+
+```go
+func sayHello(){
+  for i := 0;i<10;i++{
+    fmt.Println("hello, world!")
+  }
+}
+
+func test(){
+  //⚠️这里使用defer + recover 做一个匿名函数-错误处理机制
+  //⚠️这样做了之后即使这个协程出错，不会影响 其他协程 和 主线程 的运行
+  defer func(){
+    if err := recover(); err != nil{
+      fmt.Println("test()发生错误：",err)
+    }
+  }()
+  var myMap map[int]string
+  myMap[0] = "golang" //❗️⚠️显然是错误的，使用map一定要先make
+}
+
+func main(){
+  go sayHello()
+  go test()
+  
+  for i:=0;i<10;i++{
+    fmt.Println("OK")
+  }
+}
+```
+
+
+
+## 12.8 协程goroutine配合管道channel的综合案例
+
+### 12.8.1 综合案例一
+
+**题目：**开启一个writeData协程，向管道intChan中写入50个整数；开启一个readData协程，从管道intChan中读取writeData写入的数据；writeData和readDate操作的是同一个管道；主线程需要等待writeData和readData协程都完成工作才能退出。
+
+**思路：**
+
+<img src="/Users/mac/Desktop/markdown笔记/Mutong-System_Iteration/BackEnd-system/GolangNoteImage/30881716102654_.pic_hd.jpg" alt="30881716102654_.pic_hd" style="zoom:50%;" />
+
+**代码实现：**
+
+```go
+
+func writeData(intChan chan int){
+  for i:=0;i<50;i++{
+    //放入数据
+    intChan <- i
+  }
+  close(intChan)
+}
+
+func readData(intChan chan int, exitChan chan bool){
+  for {
+    v, ok := <- intChan
+    //读不到数据了就退出
+    if !ok{
+      break
+    }
+    fmt.Printf("readData 读到数据%v \n",v)
+  }
+  //读完数据后给exitChan写入true
+  exitChan <- true
+  close(exitChan)
+}
+
+func main(){
+  intChan := make(chan int, 50)
+  exitChan := make(chan bool, 1)
+  //开两个协程同时进行
+  go writeData(intChan)
+  go readData(intChan, exitChan)
+  
+  for {
+    //⚠️注意这个写法：
+    //❗️如果exitChan打开了但是为空，那么 <- exitChan 操作会被阻止（锁住），代码不会向前进
+    //❗️如果exitChan关闭了，那么ok会是false
+    _, ok := <- exitChan
+    if !ok{
+      break
+    }
+  }
+}
+```
+
+**注意⚠️：**
+
+1）如果编译器发现一个管道只写（只开辟10的容量，却写的不只10个），却没有读，那么该管道会阻塞（deadlock）。
+
+2）如果写管道和读管道的频率不一致，无所谓，它会自动调节。
+
+
+
+
+
+### 12.8.2 综合案例二
+
+**题目：**要求统计1-80000的数字中，哪些是素数？要求开四个goroutine。
+
+**思路：**
+
+<img src="/Users/mac/Desktop/markdown笔记/Mutong-System_Iteration/BackEnd-system/GolangNoteImage/30961716168912_.pic_hd.jpg" alt="30961716168912_.pic_hd" style="zoom:50%;" />
+
+**代码实现：**
+
+```go
+import (
+	"fmt"
+)
+
+func putNum(intChan chan int){
+  for i:=0;i<80000;i++{
+    intChan <- i
+  }
+  close(intChan)
+}
+func primeNum(intChan chan int, primeChan chan int, exitChan chan bool){
+  var num int
+  //intChan已经close了，所以这里直接一直循环就可以
+  for {
+    num,ok = <-intChan
+    if !ok{
+      break
+    }
+    
+    flag = true//假设是素数
+    for i:= 2; i<num ;i++{
+      if num%i == 0{//说明num不是素数
+        flag = flase
+        break
+      }
+    }
+    if flag{
+      primeChan <- num
+    }
+  }
+  //⚠️这里不能关闭primeChan
+  //⚠️因为这个协程完成了，可能其他协程还没完成
+  //向exitChan放入此协程完成工作信号
+  exitChan <- true
+}
+
+func main(){
+  //放素数的channel
+  intChan := make(chan int, 10000)
+  //放素数的channel
+  primeChan := make(chan int, 10000)
+  //标识退出的channel 
+  exitChan := make(chan bool,4)//开四个goroutine所以这里需要4个
+  
+  //开启一个协程 向intChan放入80000num
+  go putNum(intChan)
+  //开启四个协程从intChan当中取出数据，并判断是否为素数，放入primeChan
+  for i:=0;i<4;i++{
+    go primeNum(intChan, primeChan, exitChan)
+  }
+  
+  //❗️主线程要进行处理，这里也可以开一个协程（直接匿名函数）
+  go func(){
+    for i:=0;i<4;i++ {
+    //⚠️这里结果不重要，所以可以直接丢掉
+    //⚠️一直这样取，如果取不出来它会自己卡住，除非取够四个正常退出
+    <-exitChan
+  }
+    //能顺利取出4个说明4个协程已经工作完毕，可以关闭primeChan了
+    close(primeChan)
+  }()
+  
+  //遍历primeChan，把结果取出来打印
+  for {
+    res,ok := <- primeChan
+    if !ok{
+      break
+    }
+    fmt.Println("1-80000个数字中的素数有：",res)
+  }
+}
+```
+
+# 13 反射
+
+## 13.1 反射的基本介绍
+
+1）反射可以在运行时**动态获取任意类型变量的各种信息**（比如获取变量的类型(type)），反过来，通过反射，又可以**操作这个变量**（比如修改变量的值，调用其关联的方法）
+
+2）如果是结构体变量，还可以获取到结构体本身的信息（包括结构体的字段、方法）。
+
+3）使用反射，需要import "reflect"
+
+**反射示意图：**
+
+<img src="/Users/mac/Library/Containers/com.tencent.xinWeChat/Data/Library/Application Support/com.tencent.xinWeChat/2.0b4.0.9/ec9416860931e19635b4b3bdc058ef8c/Message/MessageTemp/ec9416860931e19635b4b3bdc058ef8c/Image/30981716185118_.pic_hd.jpg" alt="30981716185118_.pic_hd" style="zoom:50%;" />
+
+
+
+## 13.2 反射的重要函数和概念
+
+### 13.2.1 反射的重要函数
+
+**1） reflect.typeOf(变量名)**：获取变量的类型，返回一个reflect.Type类型
+
+**2） reflect.ValueOf(变量名)**：获取变量的值，返回一个reflect.Value类型（这是一个结构体类型，因此**通过reflect.Value可以获取关于该变量的很多信息**）
+
+### 13.2.2 反射的重要概念
+
+**重要概念**：**变量**、**interface{}** 和 **reflect.Value** 是可以相互转换的（实际开发中，经常用到）。
+
+**示例代码：**
+
+```go
+import (
+	"reflect"
+)
+
+type Student struct{
+  Name string
+  Age int
+}
+
+var student Student
+
+//-----假设这里传入的是初始化后的student------
+func test(b interface){
+  //0⃣️通过反射获取b的type，为interface
+  rTyp := reflect.TypeOf(b)
+  //1⃣️将interface{}转成reflect.Value：直接调用reflect.ValueOf()函数
+  rVal := reflect.ValueOf(b) 
+  //2⃣️将reflect.Value转成空接口：调用reflect.Value自带的方法
+  iVal := rVal.Interface()
+  //3⃣️将interface{}转为它本身的类型：使用类型断言
+  //❗️这是因为只有将它转回结构体才能取出student内的值
+  v := iVal.(Student)
+  //4⃣️获取变量对应的kind
+  //1）通过reflect.TypeOf反射来获取
+  vTyp := reflect.TypeOf(v)
+  kind1 := vTyp.Kind()//struct
+  //2）通过reflect.ValueOf反射来获取
+  vVal := reflect.ValueOf(v)
+  kind2 := vVal.Kind()//struct
+  //⚠️type和kind的区别：比如这里 kind为struct ；而 type则为main.Student
+}
+```
+
+**示意图：**
+
+<img src="/Users/mac/Desktop/markdown笔记/Mutong-System_Iteration/BackEnd-system/GolangNoteImage/30991716186520_.pic.jpg" alt="30991716186520_.pic" style="zoom:50%;" />
+
+
+
+
+
+## 13.3 反射的注意事项和细节
+
+注意⚠️：
+
+1）Type是类型，kind是类别，Type和Kind可能相同，也可能不同（取决于变量有没有使用type取别名，以及变量所在包名）。
+
+2）通过reflect.ValueOf()获取变量的值 和 变量 本身，它们的类型是不匹配的（尽管值打印出来是一样的）；想要匹配要将reflect.Value()得到的值转换为它原本的数据类型，否则报panic。
+
+3）通过反射修改变量值，先用reflect.ValueOf(b)拿到变量值rVal，接着使用rVal.SetXXX方法，但有时候使用函数传参的方式修改变量，不能使用指针（rVal是指针类型，而SetXXX方法操作指针类型）。这种情况应该改代码为：**rVal.Elem().SetInt()**（就好像.Elem()拿到了rVal指针指向的value）
+
+## 13.4 反射的最佳实践
+
+```go
+import (
+	"fmt"
+  "reflect"
+)
+
+type Monster struct {
+  Name string `json:monster_name`
+  Age int	`json:monster_age`
+}
+//方法，显示s的值
+func (s Monster) Print(){
+  fmt.Println(s)
+}
+//方法，返回两个数的和
+func (s Monster) GetSum(n1,n2 int) int{
+  return n1+n2
+}
+//方法，接收4个值，给s赋值
+func (s Monster) Set(name string, age int, score float32, sex string){
+  s.Name = name
+  s.Age = age
+  s.Score = score
+  s.Sex = sex
+}
+
+func TestStruct(a interface{}){
+  //获取a的reflect.Type类型
+  typ:= reflect.TypeOf(a)
+  //获取a的reflect.Value类型值
+  val := reflect.ValueOf(a)
+  //获取到a对应的类别
+  kd := val.Kind()
+  //❗️判断kd是不是reflect.Struct类型
+  if kd != reflectStruct {
+    fmt.Println("希望是一个结构体，而不是其他！")
+    return
+  }
+  //❗️获取到该结构体有几个字段
+  num := val.NumField()
+  
+  //遍历结构体所有字段
+  for i := 0; i < num; i++{
+    //❗️val.Field(i)获取结构体第i个字段
+    fmt.Printf("第%d个字段，值为%d",i,val.Field(i))
+    //❗️获取struct标签，⚠️要通过reflect.Type来获取tag标签的值，因为它的Field()拿到了一个结构体(其中有Tag字段)
+    tagVal := typ.Field(i).Tag.Get("json")
+    if tagVal != ""{
+      fmt.Println("第%d个字段，值为%d，tag为%d",i,val.Field(i),tagVal)
+    }
+    //❗️获取到该结构体有多少个方法
+    numOfMethod := val.NumMethod()
+    //❗️val.Method(1)获取到的第二个方法，Call()调用，nil表示传入参数为空.⚠️方法的排序默认按照函数名排序，也就是ascii码
+    val.Method(0).Call(nil)
+    
+    //❗️调用第1个方法,传入参数时 使用reflect.Value切片[]reflect.Value
+    var params []reflect.Value
+    params = append(params,reflect.ValueOf(10))
+    params = append(params,reflect.ValueOf(40))
+    res := val.Method(0).Call(params) //⚠️返回的还是[]reflect.Value切片
+    //❗️拿到[]reflect.Value类型返回值，并转为Int类型输出
+    fmt.Println(res[0].Int())
+  }
+}
+
+func main(){
+  var a Monster = Monster{
+    Name:"牛",
+    Age: 20,
+  }
+  TestStructure(a)
+}
+```
+
+
+
+# 14 tcp编程
+
+## 14.1 网络编程基本介绍
+
+### 14.1.1 golang关于网络编程
+
+golang的主要设计目标之一就是面向大规模后端服务程序，网络通信这块是服务端程序必不可少且至关重要的一部分。
+
+### 14.1.2 网络编程分类
+
+第一种：**TCP socket编程**，网络编程主流。因为底层基于Tcp/ip协议，比如：QQ聊天。
+
+第二种：b/s结构的**http编程**。我们使用浏览器去访问服务器时，使用的就是http协议，而http底层依旧是用tcp socket实现的，比如：京东商城。（go web开发范畴）
+
+## 14.2 网络编程基础知识
+
+### 14.2.1 网线，网卡，无线网卡
+
+计算机间相互通讯，必须有网线，网卡，无线网卡
+
+### 14.2.2 协议（tcp/ip）
+
+**定义：**
+
+1）TCP/IP（Transmission Control Protocol/ Internet Protocol），中文为 传输控制协议/因特网互联协议，又叫网络通讯协议。
+
+2）这个协议是Internet最基本的协议、Internet国际互联网络的基础。
+
+3）简单来说，就是由 网络层的IP协议 和 传输层的TCP协议组成。
+
+**OSI模型与TCP/IP参考模型：**
+
+<img src="/Users/mac/Desktop/markdown笔记/Mutong-System_Iteration/BackEnd-system/GolangNoteImage/31551716781358_.pic_hd.jpg" alt="31551716781358_.pic_hd" style="zoom:50%;" />
+
+**QQ间相互通讯案例：**
+
+<img src="/Users/mac/Desktop/markdown笔记/Mutong-System_Iteration/BackEnd-system/GolangNoteImage/31561716782625_.pic_hd.jpg" alt="31561716782625_.pic_hd" style="zoom:50%;" />
+
+### 14.2.3 ip地址
+
+每个internet上的主机和路由器都有一个ip地址，它包括网络号和主机号，ip地址有ipv4（32位）或者ipv6（128位），可以通过ipconfig查看（而mac中使用 ifconfig 来获取和配置网络接口信息）。
+
+### 14.2.4 端口port
+
+**基本介绍：**这里的端口不是物理意义的，而是特指TCP/IP协议中的端口，是逻辑意义上的。
+
+1）只要是做服务程序，都必须监听一个端口
+
+2）该端口就是其他程序和该服务通讯的通道
+
+3）一个IP地址有65535个端口1-65535（256x256）
+
+4）一旦一个端口被某个程序监听（占用），其他程序不能再该端口监听
+
+**端口（port）-分类：**
+
+1）0：保留端口
+
+2）1-1024：固定端口
+
+也叫有名端口，即被某些程序固定使用，一般程序猿不能用。
+
+3）1025-65535：动态端口
+
+程序员可以用
+
+**端口使用注意：**
+
+1）计算机（尤其是做服务器）尽量少开端口
+
+2）netstat -an 可以查看本机有哪些端口在监听
+
+3）netstat -anb 可以查看监听端口的pid，然后结合任务管理器关闭不安全的端口
+
+## 14.3 网络编程快速入门案例
+
+### 14.3.1 快速入门案例要求
+
+<img src="/Users/mac/Desktop/markdown笔记/Mutong-System_Iteration/BackEnd-system/GolangNoteImage/31771716883534_.pic.jpg" alt="31771716883534_.pic" style="zoom:67%;" />
+
+### 14.3.2 快速入门案例流程图
+
+<img src="/Users/mac/Desktop/markdown笔记/Mutong-System_Iteration/BackEnd-system/GolangNoteImage/31781716883789_.pic.jpg" alt="31781716883789_.pic" style="zoom:67%;" />
+
+### 14.3.3 快速入门案例代码
+
+见GoProject/src/project03
+
+
+
+
+
+
+
+
+
+
+
